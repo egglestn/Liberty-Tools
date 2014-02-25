@@ -37,6 +37,7 @@ public class Main {
       try {
         JMXServiceURL url = new JMXServiceURL(address);
         JMXConnector conn = JMXConnectorFactory.connect(url);
+        System.out.println("Connecting to " + url);
         MBeanServerConnection mbeanServer = conn.getMBeanServerConnection();
         mbeanServer.invoke(new ObjectName(
             "WebSphere:name=com.ibm.ws.jmx.mbeans.generatePluginConfig"),
@@ -62,8 +63,8 @@ public class Main {
             e);
       }
     } else {
-      System.err.println("Unable to connect to " + args.getServerName()
-          + "'s MBean server");
+      System.err.println("Unable to connect to " + args.getServerName() 
+          + "'s MBean server. Is the server running?");
     }
   }
 

@@ -19,6 +19,7 @@ class ServerInfo {
   private final String serverName;
   private final File outputDir;
   private final String address;
+  private static final String JARNAME = "ws-server.jar";
 
   public ServerInfo(String[] args) {
     String sn = "defaultServer";
@@ -43,6 +44,13 @@ class ServerInfo {
         System.err
             .println("Invalid position. The server name must be entered as the last argument.");
       }
+    }
+    
+    if (sn.length() < 1) {
+        System.err.println("Invalid arguments. You must specify a server name");
+    }
+    else {
+        System.out.println("Server [" + sn + "]");
     }
     
     if (od == null) {
@@ -73,14 +81,19 @@ class ServerInfo {
     if (a == null) {
       VirtualMachine vm = findLibertyServer(sn);
       Properties props;
-      try {
-        props = vm.getSystemProperties();
-        outDir = new File(props.getProperty("server.output.dir"));
-        a = getAddress(vm, props);
-        vm.detach();
-      } catch (IOException e) {
-        reportError("An I/O error happened while generating the plugin config",
+      if (vm == null) {
+         System.out.println("Failed to find liberty server");
+      }
+      else {
+        try {
+          props = vm.getSystemProperties();
+          outDir = new File(props.getProperty("server.output.dir"));
+          a = getAddress(vm, props);
+          vm.detach();
+        } catch (IOException e) {
+          reportError("An I/O error happened while generating the plugin config",
             e);
+        }
       }
     }
 
@@ -121,10 +134,14 @@ class ServerInfo {
   private VirtualMachine findLibertyServer(String sn) {
     List<VirtualMachineDescriptor> vmds = VirtualMachine.list();
 
+    boolean matched = false;
+
     for (VirtualMachineDescriptor vmd : vmds) {
       String displayName = vmd.displayName();
-      if (displayName.contains("ws-launch.jar")) {
-        if (displayName.contains("ws-launch.jar " + sn)) {
+      System.out.println(displayName);
+      if (displayName.contains(JARNAME)) {
+        if (displayName.contains(JARNAME + " " + sn)) {
+          matched = true;
           try {
             return VirtualMachine.attach(vmd);
           } catch (AttachNotSupportedException e) {
@@ -137,6 +154,10 @@ class ServerInfo {
           }
         }
       }
+    }
+    
+    if (!matched) {
+       System.err.println("No VMs found for " + JARNAME + " and " + sn);
     }
     
     return null;
